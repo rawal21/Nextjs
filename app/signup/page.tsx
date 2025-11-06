@@ -3,49 +3,33 @@
 import axios from "axios";
 import { useState } from "react";
 import {  useRouter } from "next/navigation";
+import { useAppDispatch , useAppSelector } from "../redux/hooks";
+import { signupUser } from "../redux/slices/authSlice";
 export default function ProfileCard() {
   const router  = useRouter();
+  const disaptch = useAppDispatch();
+  const {loading , error } = useAppSelector((state)=>  state.auth);
   const [formData, setFormData] = useState({ name : "", email: "", password: "" });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // prevent page reload
-    setError(null); // reset previous error
+  
 
     // 🔹 Validate before sending
     if (!formData.email || !formData.password) {
-      setError("Please enter both email and password.");
+      console.log("Please enter both email and password.");
       return;
-    }
+    } 
 
-    setLoading(true);
+    const  result = await disaptch(signupUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+    }));
 
-    try {
-      // 🔹 Send plain formData (not wrapped in { formData })
-      const res = await axios.post("http://localhost:3000/auth/signup", formData);
-
-      console.log("✅ Login successful:", res.data);
-
-      // Example: store token or redirect
-        localStorage.setItem("user" , JSON.stringify(res.data))
-      // localStorage.setItem("token", res.data.token);
-      if(res.status ==201)
-      {
-        router.push('/login')
-      }
-      // router.push("/dashboard");
-    } catch (err: any) {
-      console.error("❌ Login error:", err.response?.data || err.message);
-
-      // 🔹 Display server error message (if provided)
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+     if (signupUser.fulfilled.match(result)) {
+      router.push("/login");
     }
   };
 

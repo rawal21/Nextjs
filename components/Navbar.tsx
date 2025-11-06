@@ -1,9 +1,9 @@
 "use client";
-
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { useAppDispatch , useAppSelector } from "@/app/redux/hooks";
+import { logout , setCredentials } from "@/app/redux/slices/authSlice";
 interface User {
   name : string ,
   email : string ,
@@ -13,18 +13,23 @@ interface User {
 }
 
 export default function Navbar() {
-  const [token, setToken] = useState<string | null>(null);
-  const router = useRouter();
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    setToken(storedToken);
-  }, []);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const {access_token , user} = useAppSelector((state)=> state.auth);
+
+
+    useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && !access_token) {
+      dispatch(setCredentials({ user: user, access_token: token }));
+    }
+  }, [dispatch, access_token, user]);
+ 
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    router.push("/login"); // redirect after logout
+    dispatch(logout());
+    router.push("/login");
   };
 
   return (
@@ -43,7 +48,7 @@ export default function Navbar() {
           Features
         </Link>
 
-        {!token ? (
+        {!access_token ? (
           <>
             <Link
               href="/login"

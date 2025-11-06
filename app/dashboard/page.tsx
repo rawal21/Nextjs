@@ -1,44 +1,30 @@
 "use client";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchPosts } from "../redux/slices/postSlice.";
+import { useAppDispatch , useAppSelector } from "../redux/hooks";
 
 export default function Dashboard() {
   const [storedUser, setStoredUser] = useState(null);
-  const [posts , setPosts] = useState([]);
+  const router = useRouter();
+   const dispatch = useAppDispatch();
+   const {error , loading , posts } = useAppSelector((state)=> state.post);
+   
+   console.log("trying to fetch post usiing redux " , posts)
 
-  
-const fetchPost = async () => {
-  try {
-    // Get token from localStorage
-    const token = localStorage.getItem("token");
+  const fetchPost = async () => {
+     dispatch(fetchPosts());
+  };
 
-    // Make sure token exists
-    if (!token) {
-      console.warn("No token found in localStorage");
-      return;
-    }
-
-    // Send request with token in Authorization header
-    const res = await axios.get("http://localhost:3000/posts", {
-      headers: {
-        Authorization: `Bearer ${token}`, // 👈 Important
-      },
-    });
-
-    console.log(res.data);
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-  }
-};
-
-    useEffect(()=>{
-       fetchPost();
-    } , [posts])
+  useEffect(() => {
+    fetchPost(); // ✅ run once
+  }, []);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
-      const parsedUser = JSON.parse(userData); // ✅ convert string → object
+      const parsedUser = JSON.parse(userData);
       setStoredUser(parsedUser);
       console.log(parsedUser);
     }
@@ -54,22 +40,46 @@ const fetchPost = async () => {
             Welcome, {storedUser ? storedUser.name : "User"}
           </p>
         </div>
-        <button className="bg-gray-800 text-lg rounded-lg text-white py-2 p-3 hover:bg-gray-700">
+        <button
+          onClick={() => router.push("/post")}
+          className="bg-gray-800 text-lg rounded-lg text-white py-2 p-3 hover:bg-gray-700"
+        >
           Add Post
         </button>
       </div>
 
       <div>
-         {posts ? (
-    <>
-           <p>You haven't posted anything</p>
-      <h4>Write your first post</h4>
-    </>
-  ) : (
-    <>
-      <p>fetching</p>
-    </>
-  )}
+        {posts?.length > 0 ? (
+          <div className="flex flex-col w-screen items-center  p-10">
+            {posts.map((post) => (
+              <div
+                className=" mx-auto flex flex-col w-90 items-start p-10 justify-center bg-white shadow-lg w-full border border-gray-100 hover:border-gray-800"
+                key={post._id}
+              >
+                <h4 className="font-bold text-lg">{post.title}</h4>
+                <div className="flex flex-row items-center w-full justify-between">
+
+                <p className="font-semibold text-sm text-gray-500">
+                   {new Date(post.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })}{" "}
+  • {post.author.name}
+                </p>
+                <p onClick={()=>router.push(`post/${post.slug}`)} className="font-bold hover:text-gray-700 hover:underline">
+                  Read More
+                </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <p>You haven't posted anything</p>
+            <h4>Write your first post</h4>
+          </>
+        )}
       </div>
     </div>
   );

@@ -3,50 +3,29 @@
 import axios from "axios";
 import { useState } from "react";
 import {  useRouter } from "next/navigation";
+import { loginUser } from "../redux/slices/authSlice";
+import { useAppDispatch , useAppSelector } from "../redux/hooks";
 export default function ProfileCard() {
   const router  = useRouter();
+  const dispatch = useAppDispatch();
+  const {loading , error  , access_token } = useAppSelector((stste)=> stste.auth);
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // prevent page reload
-    setError(null); // reset previous error
+   e.preventDefault();
+   if (!formData.email || !formData.password) return;
 
-    // 🔹 Validate before sending
-    if (!formData.email || !formData.password) {
-      setError("Please enter both email and password.");
-      return;
-    }
+   const result = await dispatch(
+    loginUser({email : formData.email , password : formData.password})
+   )
 
-    setLoading(true);
+  console.log("the  result in loigin" , result);
 
-    try {
-      // 🔹 Send plain formData (not wrapped in { formData })
-      const res = await axios.post("http://localhost:3000/auth/login", formData);
-
-      console.log("✅ Login successful:", res.data);
-
-      // Example: store token or redirect
-        await localStorage.setItem('token' , res.data?.access_token)
-      // localStorage.setItem("token", res.data.token);
-      if(res.status ==201)
-      {
-        router.push('/dashboard')
-      }
-      // router.push("/dashboard");
-    } catch (err: any) {
-      console.error("❌ Login error:", err.response?.data || err.message);
-
-      // 🔹 Display server error message (if provided)
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
+   if(loginUser.fulfilled.match(result))
+   {
+    router.push("/dashboard")
+   }
   };
 
   return (
