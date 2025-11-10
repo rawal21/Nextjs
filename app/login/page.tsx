@@ -3,29 +3,36 @@
 import axios from "axios";
 import { useState } from "react";
 import {  useRouter } from "next/navigation";
-import { loginUser } from "../redux/slices/authSlice";
+// import { loginUser } from "../redux/slices/authSlice";
+import { useLoginUserMutation } from "../services/api";
 import { useAppDispatch , useAppSelector } from "../redux/hooks";
+import { setTokens } from "../redux/slices/authSlice";
 export default function ProfileCard() {
   const router  = useRouter();
   const dispatch = useAppDispatch();
-  const {loading , error  , access_token } = useAppSelector((stste)=> stste.auth);
+  // const {loading , error  , access_token } = useAppSelector((stste)=> stste.auth);
   const [formData, setFormData] = useState({ email: "", password: "" });
+
+  const [loginUser , {isLoading , error} ] = useLoginUserMutation();  
+
   
 
   const handleSubmit = async (e: React.FormEvent) => {
    e.preventDefault();
    if (!formData.email || !formData.password) return;
-
-   const result = await dispatch(
-    loginUser({email : formData.email , password : formData.password})
-   )
-
-  console.log("the  result in loigin" , result);
-
-   if(loginUser.fulfilled.match(result))
-   {
-    router.push("/dashboard")
-   }
+    try{
+      const  result = await loginUser({
+        email : formData.email ,
+        password : formData.password
+      }).unwrap();
+    
+      console.log("login sucess " , result);
+      dispatch(setTokens({accessToken : result.access_token}))
+      router.push("/dashboard")
+    }catch(error : any)
+    {
+      console.error("Login failed" , error)
+    }
   };
 
   return (
@@ -69,14 +76,14 @@ export default function ProfileCard() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isLoading}
           className={`w-full rounded-lg text-lg font-semibold text-white py-2 transition ${
-            loading
+            isLoading
               ? "bg-gray-500 cursor-not-allowed"
               : "bg-gray-800 hover:bg-gray-700"
           }`}
         >
-          {loading ? "Logging in..." : "Login"}
+          {isLoading ? "Logging in..." : "Login"}
         </button>
 
         <p className="text-sm text-gray-500 mt-2 text-center">

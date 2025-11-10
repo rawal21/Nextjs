@@ -4,32 +4,33 @@ import axios from "axios";
 import { useState } from "react";
 import {  useRouter } from "next/navigation";
 import { useAppDispatch , useAppSelector } from "../redux/hooks";
-import { signupUser } from "../redux/slices/authSlice";
+import { useSignupUserMutation } from "../services/api";
 export default function ProfileCard() {
   const router  = useRouter();
   const disaptch = useAppDispatch();
-  const {loading , error } = useAppSelector((state)=>  state.auth);
+  const [SinupUser , {isLoading , error }] = useSignupUserMutation();
   const [formData, setFormData] = useState({ name : "", email: "", password: "" });
 
 
+ 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // prevent page reload
-  
+    e.preventDefault();
 
-    // 🔹 Validate before sending
-    if (!formData.email || !formData.password) {
-      console.log("Please enter both email and password.");
+    // 🔹 Validation
+    if (!formData.name || !formData.email || !formData.password) {
+      console.log("Please fill all fields.");
       return;
-    } 
+    }
 
-    const  result = await disaptch(signupUser({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-    }));
+    try {
+      // 🔹 Call mutation and unwrap to get response
+      const result = await SinupUser(formData).unwrap();
+      console.log("Signup successful:", result);
 
-     if (signupUser.fulfilled.match(result)) {
+      // 🔹 Redirect after signup
       router.push("/login");
+    } catch (err: any) {
+      console.error("Signup failed:", err?.data?.message || err);
     }
   };
 
@@ -85,14 +86,14 @@ export default function ProfileCard() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isLoading}
           className={`w-full rounded-lg text-lg font-semibold text-white py-2 transition ${
-            loading
+            isLoading
               ? "bg-gray-500 cursor-not-allowed"
               : "bg-gray-800 hover:bg-gray-700"
           }`}
         >
-          {loading ? "Logging in..." : "Signup"}
+          {isLoading ? "Logging in..." : "Signup"}
         </button>
 
         <p className="text-sm text-gray-500 mt-2 text-center">

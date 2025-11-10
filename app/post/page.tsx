@@ -2,25 +2,34 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { createPost } from "../redux/slices/postSlice.";
+// import { createPost } from "../redux/slices/postSlice";
 import { useAppSelector, useAppDispatch } from "../redux/hooks";
-import { title } from "process";
+import { useCreatePostMutation } from "../services/postapi";
 
 export default function PostForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({ title: "", content: "" });
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.post);
+  // const { loading, error } = useAppSelector((state) => state.post);
+  const [createPost , {isLoading , error}] = useCreatePostMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await dispatch(
-      createPost({ title: formData.title, content: formData.content })
-    );
+    try {
+      // Call the mutation and unwrap the response
+      const res = await createPost({
+        title: formData.title,
+        content: formData.content,
+      }).unwrap();
 
-    if (createPost.fulfilled.match(res)) {
+      // Success: redirect to dashboard
       router.push("/dashboard");
+    } catch (err) {
+      // Handle error (err contains server error message)
+      console.error("Failed to create post:", err);
     }
   };
 
