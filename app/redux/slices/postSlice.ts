@@ -45,7 +45,8 @@ export const postSlice = createSlice({
           postApi.endpoints.fetchPost.matchFulfilled,
           postApi.endpoints.getPostById.matchFulfilled,
           postApi.endpoints.createPost.matchFulfilled,
-          postApi.endpoints.updatePost.matchFulfilled
+          postApi.endpoints.updatePost.matchFulfilled,
+          postApi.endpoints.uploadImage.matchFulfilled
         ),
         (state, action) => {
            console.log("debugging the posts in auth slice .." , action.payload);
